@@ -14,41 +14,49 @@ export function formatMoney(amount: number): string {
   return "$" + amount.toLocaleString("en-US")
 }
 
-// Load all entries from Supabase, highest bid first.
 export async function fetchPlayers(): Promise<Player[]> {
   const supabase = createClient()
+
   const { data, error } = await supabase
     .from("entries")
     .select("username, website_url, bid")
     .order("bid", { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    throw error
+  }
 
   return (data ?? []).map((row) => ({
-    username: row.username as string,
+    username: String(row.username),
     amount: Number(row.bid),
-    url: (row.website_url as string | null) ?? undefined,
+    url: row.website_url
+      ? String(row.website_url)
+      : undefined,
   }))
 }
 
-// Save a new bid through the atomic database function.
 export async function addPlayer(player: Player): Promise<Player> {
   const supabase = createClient()
 
-  const { data, error } = await supabase.rpc("place_bid", {
-    p_username: player.username,
-    p_website_url: player.url ?? null,
-    p_bid: player.amount,
-  })
+  const { data, error } = await supabase
+    .from("entries")
+    .insert({
+      username: player.username,
+      website_url: player.url ?? null,
+      bid: player.amount,
+    })
+    .select("username, website_url, bid")
+    .single()
 
-  if (error) throw error
-
-  const row = Array.isArray(data) ? data[0] : data
-  if (!row) throw new Error("Bid was accepted but no entry was returned")
+  if (error) {
+    throw error
+  }
 
   return {
-    username: String(row.username),
-    amount: Number(row.bid),
-    url: (row.website_url as string | null) ?? undefined,
+    username: String(data.username),
+    amount: Number(data.bid),
+    url: data.website_url
+      ? String(data.website_url)
+      : undefined,
   }
 }
