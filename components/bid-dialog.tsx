@@ -82,20 +82,28 @@ export function BidDialog({
     }
 
     if (!/^https?:\/\//i.test(trimmedUrl)) {
-      trimmedUrl = `https://${trimmedUrl}`
-    }
+  trimmedUrl = `https://${trimmedUrl}`
+}
 
-    try {
-      const parsedUrl = new URL(trimmedUrl)
+try {
+  const parsedUrl = new URL(trimmedUrl)
 
-      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-        setError("Please enter a valid website URL.")
-        return
-      }
-    } catch {
-      setError("Please enter a valid website URL.")
-      return
-    }
+  const hasValidProtocol =
+    parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:"
+
+  const hasValidHostname =
+    parsedUrl.hostname.length > 0 &&
+    !/\s/.test(parsedUrl.hostname) &&
+    parsedUrl.hostname.includes(".")
+
+  if (!hasValidProtocol || !hasValidHostname) {
+    setError("Please enter a valid website URL.")
+    return
+  }
+} catch {
+  setError("Please enter a valid website URL.")
+  return
+}
 
     if (!Number.isFinite(bid) || bid < minBid) {
       setError(`Your bid must be at least ${formatMoney(minBid)}.`)
