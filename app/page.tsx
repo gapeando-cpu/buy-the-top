@@ -17,20 +17,34 @@ import {
 export default function Page() {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     let active = true
 
+    setLoading(true)
+    setLoadError("")
+
     fetchPlayers()
       .then((rows) => {
-        if (active) setPlayers(rows)
+        if (!active) return
+
+        setPlayers(rows)
       })
       .catch((err) => {
         console.error("[v0] failed to load leaderboard", err)
+
+        if (!active) return
+
+        setLoadError(
+          "Unable to load the leaderboard. Please try again."
+        )
       })
       .finally(() => {
-        if (active) setLoading(false)
+        if (active) {
+          setLoading(false)
+        }
       })
 
     return () => {
@@ -47,12 +61,12 @@ export default function Page() {
 
     const rows = await fetchPlayers()
     setPlayers(rows)
-setDialogOpen(false)
+    setDialogOpen(false)
   }
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* ambient gold light behind the title */}
+      {/* Ambient gold light behind the title */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-gold/15 blur-3xl"
@@ -90,10 +104,26 @@ setDialogOpen(false)
           ) : null}
         </header>
 
+        {/* Leaderboard state */}
         {loading ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Loading the leaderboard…
           </p>
+        ) : loadError ? (
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <p className="text-sm text-destructive">
+              {loadError}
+            </p>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="rounded-full"
+            >
+              Retry
+            </Button>
+          </div>
         ) : champion ? (
           <>
             <ChampionCard champion={champion} />
