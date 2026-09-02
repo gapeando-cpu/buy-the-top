@@ -1,11 +1,29 @@
+'use client'
+
 import { Crown } from 'lucide-react'
 import { formatMoney, type Player } from '@/lib/leaderboard-data'
 
 export function ChampionCard({ champion }: { champion: Player }) {
+  function handleClick() {
+    if (!champion.url) return
+    window.open(champion.url, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <section
       aria-label="Current number one"
-      className="relative overflow-hidden rounded-3xl border border-gold/40 bg-card"
+      onClick={handleClick}
+      className={`relative overflow-hidden rounded-3xl border border-gold/40 bg-card ${
+        champion.url ? 'cursor-pointer' : ''
+      }`}
+      role={champion.url ? 'link' : undefined}
+      tabIndex={champion.url ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (champion.url && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          handleClick()
+        }
+      }}
     >
       {/* gold glow */}
       <div
