@@ -68,15 +68,32 @@ export function BidDialog({
     e.preventDefault()
 
     const trimmedName = username.trim()
-let trimmedUrl = url.trim()
-const bid = Number(amount)
-
-if (trimmedUrl && !/^https?:\/\//i.test(trimmedUrl)) {
-  trimmedUrl = `https://${trimmedUrl}`
-}
+    let trimmedUrl = url.trim()
+    const bid = Number(amount)
 
     if (!trimmedName) {
       setError("Please enter a username.")
+      return
+    }
+
+    if (!trimmedUrl) {
+      setError("Please enter a website URL.")
+      return
+    }
+
+    if (!/^https?:\/\//i.test(trimmedUrl)) {
+      trimmedUrl = `https://${trimmedUrl}`
+    }
+
+    try {
+      const parsedUrl = new URL(trimmedUrl)
+
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        setError("Please enter a valid website URL.")
+        return
+      }
+    } catch {
+      setError("Please enter a valid website URL.")
       return
     }
 
@@ -88,7 +105,7 @@ if (trimmedUrl && !/^https?:\/\//i.test(trimmedUrl)) {
     const player: Player = {
       username: trimmedName,
       amount: Math.floor(bid),
-      url: trimmedUrl || undefined,
+      url: trimmedUrl,
     }
 
     setError("")
@@ -205,7 +222,8 @@ if (trimmedUrl && !/^https?:\/\//i.test(trimmedUrl)) {
 
                 <input
                   id="url"
-                  type="url"
+                  type="text"
+                  inputMode="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="example.com"
@@ -244,7 +262,7 @@ if (trimmedUrl && !/^https?:\/\//i.test(trimmedUrl)) {
               {error ? (
                 <div
                   role="alert"
-                  className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive break-words"
+                  className="break-words rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
                 >
                   {error}
                 </div>
