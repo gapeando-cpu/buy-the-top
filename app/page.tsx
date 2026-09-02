@@ -47,6 +47,7 @@ export default function Page() {
 
     const rows = await fetchPlayers()
     setPlayers(rows)
+setDialogOpen(false)
   }
 
   return (
