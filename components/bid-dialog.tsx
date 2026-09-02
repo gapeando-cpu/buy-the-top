@@ -68,8 +68,12 @@ export function BidDialog({
     e.preventDefault()
 
     const trimmedName = username.trim()
-    const trimmedUrl = url.trim()
-    const bid = Number(amount)
+let trimmedUrl = url.trim()
+const bid = Number(amount)
+
+if (trimmedUrl && !/^https?:\/\//i.test(trimmedUrl)) {
+  trimmedUrl = `https://${trimmedUrl}`
+}
 
     if (!trimmedName) {
       setError("Please enter a username.")
@@ -204,7 +208,7 @@ export function BidDialog({
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com"
+                  placeholder="example.com"
                   autoComplete="off"
                   className="h-12 rounded-xl border border-input bg-background px-4 text-base outline-none transition-colors focus:border-gold focus:ring-2 focus:ring-gold/30"
                 />
