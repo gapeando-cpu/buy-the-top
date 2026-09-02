@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     if (!Number.isSafeInteger(bid) || bid <= 0) {
-      return NextResponse.json({ error: "Your bid must be a positive whole dollar amount." }, { status: 400 })
+      return NextResponse.json({ error: "Your payment must be a positive whole dollar amount." }, { status: 400 })
     }
 
     const supabase = getAdminSupabase()
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const currentTop = Number(topEntry?.bid ?? 0)
     if (bid <= currentTop) {
       return NextResponse.json(
-        { error: `Your bid must be higher than $${currentTop.toLocaleString("en-US")}.` },
+        { error: `Your payment must be higher than $${currentTop.toLocaleString("en-US")}.` },
         { status: 409 },
       )
     }
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         {
           price_data: {
             currency: "usd",
-            product_data: { name: "Buy the Top leaderboard spot" },
+            product_data: { name: "Buy the Top — Leaderboard Placement" },
             unit_amount: bid * 100,
           },
           quantity: 1,
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
         username,
         website_url: parsedUrl.toString(),
         bid: String(bid),
+        payment_type: "leaderboard_placement",
       },
       success_url: `${new URL(request.url).origin}/?checkout=success`,
       cancel_url: `${new URL(request.url).origin}/?checkout=cancelled`,

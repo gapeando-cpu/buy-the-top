@@ -104,7 +104,7 @@ try {
 }
 
     if (!Number.isFinite(bid) || bid < minBid) {
-      setError(`Your bid must be at least ${formatMoney(minBid)}.`)
+      setError(`Your payment must be at least ${formatMoney(minBid)}.`)
       return
     }
 
@@ -167,7 +167,11 @@ try {
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Bid at least {formatMoney(minBid)} to take the #1 position.
+              Pay at least {formatMoney(minBid)} to take the #1 position.
+            </p>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              You are paying for leaderboard placement. There are no prizes or payouts.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
@@ -215,7 +219,7 @@ try {
                   htmlFor="amount"
                   className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
                 >
-                  Bid amount (USD)
+                  Amount to pay (USD)
                 </label>
 
                 <div className="relative">

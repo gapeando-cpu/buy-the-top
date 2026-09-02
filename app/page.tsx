@@ -88,11 +88,15 @@ export default function Page() {
           </h1>
 
           <p className="mt-4 text-lg font-medium text-foreground">
-            Pay more. Climb higher.
+            Pay to claim a spot. The higher the payment, the higher you rank.
           </p>
 
           <p className="mt-2 text-balance text-sm text-muted-foreground">
-            One leaderboard. Outbid the person above you and take their spot.
+            One competitive leaderboard for paid visibility. Pay more than the current #1 to take their spot.
+          </p>
+
+          <p className="mt-2 text-balance text-xs text-muted-foreground">
+            You are paying for leaderboard placement. There are no prizes or payouts.
           </p>
 
           <Button
@@ -107,7 +111,7 @@ export default function Page() {
 
           {champion ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Outbid {formatMoney(champion.amount)} to become #1.
+              Pay more than {formatMoney(champion.amount)} to become #1.
             </p>
           ) : null}
         </header>
@@ -144,12 +148,12 @@ export default function Page() {
           </>
         ) : (
           <p className="py-10 text-center text-sm text-muted-foreground">
-            No bids yet. Be the first to buy the top.
+            No placements yet. Be the first to claim the top spot.
           </p>
         )}
 
         <footer className="pt-1 text-center text-xs text-muted-foreground">
-          Visual prototype · Live leaderboard. No real money changes hands.
+          Paid leaderboard placement · No prizes or payouts.
         </footer>
       </div>
 

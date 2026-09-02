@@ -47,7 +47,7 @@ export function ChampionCard({ champion }: { champion: Player }) {
 
         <div className="pt-2">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Current bid
+            Amount paid
           </p>
           <p className="mt-1 font-mono text-5xl font-bold tabular-nums text-gold sm:text-6xl">
             {formatMoney(champion.amount)}

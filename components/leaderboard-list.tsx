@@ -46,7 +46,7 @@ export function LeaderboardList({ contenders }: { contenders: Player[] }) {
           Rank
         </h3>
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Bid
+          Amount paid
         </span>
       </div>
 
