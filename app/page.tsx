@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { ArrowUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChampionCard } from "@/components/champion-card"
@@ -20,53 +20,78 @@ export default function Page() {
   const [loadError, setLoadError] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  useEffect(() => {
-    let active = true
-
+  const loadLeaderboard = useCallback(async () => {
     setLoading(true)
     setLoadError("")
 
-    fetchPlayers()
-      .then((rows) => {
-        if (!active) return
+    try {
+      const rows = await fetchPlayers()
+      setPlayers(rows)
+    } catch (err) {
+      console.error("[v0] failed to load leaderboard", err)
 
-        setPlayers(rows)
-      })
-      .catch((err) => {
-        console.error("[v0] failed to load leaderboard", err)
-
-        if (!active) return
-
-        setLoadError(
-          "Unable to load the leaderboard. Please try again."
-        )
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      active = false
+      setLoadError(
+        "Unable to load the leaderboard. Please try again."
+      )
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    void loadLeaderboard()
+  }, [loadLeaderboard])
 
   const sorted = useMemo(() => sortPlayers(players), [players])
   const champion = sorted[0]
   const contenders = sorted.slice(1)
 
-  async function handleSubmit(player: Player) {
-    await addPlayer(player)
+  async function handleSubmit(player: Player): Promise<Player> {
+    /*
+     * First save the bid.
+     *
+     * If this succeeds, the bid is considered successfully placed
+     * even if the following leaderboard refresh fails.
+     */
+    const savedPlayer = await addPlayer(player)
 
-    const rows = await fetchPlayers()
-    setPlayers(rows)
+    /*
+     * Immediately update the local leaderboard with the saved bid.
+     * This prevents the UI from depending entirely on a second
+     * network request after a successful insert.
+     */
+    setPlayers((currentPlayers) =>
+      sortPlayers([...currentPlayers, savedPlayer])
+    )
+
+    /*
+     * Try to get the authoritative leaderboard from Supabase.
+     *
+     * If this refresh fails, we keep the locally updated leaderboard.
+     * The bid itself has already been successfully saved.
+     */
+    try {
+      const rows = await fetchPlayers()
+      setPlayers(rows)
+    } catch (err) {
+      console.error("[v0] failed to refresh leaderboard after bid", err)
+
+      /*
+       * We deliberately do not throw here.
+       *
+       * Throwing would make BidDialog display an error even though
+       * the user's bid was already successfully saved.
+       */
+    }
+
     setDialogOpen(false)
+
+    return savedPlayer
   }
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* Ambient gold light behind the title */}
+      {/* ambient gold light behind the title */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-gold/15 blur-3xl"
@@ -90,7 +115,7 @@ export default function Page() {
           <Button
             size="lg"
             onClick={() => setDialogOpen(true)}
-            disabled={loading}
+            disabled={loading || !!loadError}
             className="mt-8 h-14 w-full gap-2 rounded-full bg-gold px-8 text-base font-semibold text-gold-foreground shadow-lg shadow-gold/20 hover:bg-gold/90 disabled:opacity-60 sm:w-auto"
           >
             <ArrowUp className="h-5 w-5" aria-hidden="true" />
@@ -104,26 +129,31 @@ export default function Page() {
           ) : null}
         </header>
 
-        {/* Leaderboard state */}
         {loading ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
+          <p
+            className="py-10 text-center text-sm text-muted-foreground"
+            role="status"
+          >
             Loading the leaderboard…
           </p>
         ) : loadError ? (
-          <div className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-sm text-destructive">
+          <section
+            className="flex flex-col items-center gap-4 py-10 text-center"
+            aria-live="polite"
+          >
+            <p className="text-sm text-muted-foreground">
               {loadError}
             </p>
 
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.location.reload()}
+              onClick={() => void loadLeaderboard()}
               className="rounded-full"
             >
               Retry
             </Button>
-          </div>
+          </section>
         ) : champion ? (
           <>
             <ChampionCard champion={champion} />
