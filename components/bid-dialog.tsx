@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Crown, X } from "lucide-react"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatMoney, type Player } from "@/lib/leaderboard-data"
 
@@ -9,7 +9,7 @@ type BidDialogProps = {
   open: boolean
   currentTop: number
   onClose: () => void
-  onSubmit: (player: Player) => Promise<Player>
+  onSubmit: (player: Player) => Promise<void>
 }
 
 export function BidDialog({
@@ -25,7 +25,6 @@ export function BidDialog({
   const [amount, setAmount] = useState("")
   const [error, setError] = useState("")
   const [saving, setSaving] = useState(false)
-  const [submitted, setSubmitted] = useState<Player | null>(null)
 
   const usernameRef = useRef<HTMLInputElement>(null)
 
@@ -37,7 +36,6 @@ export function BidDialog({
     setAmount("")
     setError("")
     setSaving(false)
-    setSubmitted(null)
 
     const id = window.setTimeout(() => {
       usernameRef.current?.focus()
@@ -71,7 +69,7 @@ export function BidDialog({
     let trimmedUrl = url.trim()
     const bid = Number(amount)
 
-    if (!trimmedName) {
+    if (!trimmedName || trimmedName.length > 30 || !/^[A-Za-z0-9_-]+$/.test(trimmedName)) {
       setError("Please enter a username.")
       return
     }
@@ -120,8 +118,7 @@ try {
     setSaving(true)
 
     try {
-      const savedPlayer = await onSubmit(player)
-      setSubmitted(savedPlayer)
+      await onSubmit(player)
     } catch (err: any) {
       console.error("FULL BID ERROR:", err)
 
@@ -133,8 +130,7 @@ try {
         (typeof err === "string" ? err : "")
 
       setError(
-        message ||
-          "Unable to place your bid. Check the browser console for the full error."
+        message || "Unable to open secure checkout. Please try again."
       )
     } finally {
       setSaving(false)
@@ -165,33 +161,7 @@ try {
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
 
-        {submitted ? (
-          <div className="flex flex-col items-center gap-5 py-4 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-lg shadow-gold/30">
-              <Crown className="h-7 w-7" aria-hidden="true" />
-            </span>
-
-            <div>
-              <h2 className="text-3xl font-bold">You&apos;re #1!</h2>
-
-              <p className="mt-2 text-sm text-muted-foreground">
-                {submitted.username} now leads with a bid of
-              </p>
-
-              <p className="mt-1 font-mono text-4xl font-bold tabular-nums text-gold">
-                {formatMoney(submitted.amount)}
-              </p>
-            </div>
-
-            <Button
-              onClick={onClose}
-              className="mt-2 h-12 w-full rounded-full bg-gold text-base font-semibold text-gold-foreground hover:bg-gold/90"
-            >
-              Done
-            </Button>
-          </div>
-        ) : (
-          <>
+        <>
             <h2 id="bid-title" className="text-2xl font-bold">
               Buy your spot
             </h2>
@@ -281,11 +251,10 @@ try {
                 disabled={saving}
                 className="mt-2 h-12 w-full rounded-full bg-gold text-base font-semibold text-gold-foreground hover:bg-gold/90"
               >
-                {saving ? "Placing bid…" : "Place bid"}
+                {saving ? "Opening secure checkout…" : "Continue to payment"}
               </Button>
             </form>
-          </>
-        )}
+        </>
       </div>
     </div>
   )

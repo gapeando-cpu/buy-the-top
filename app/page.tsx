@@ -8,7 +8,6 @@ import { LeaderboardList } from "@/components/leaderboard-list"
 import { BidDialog } from "@/components/bid-dialog"
 import {
   fetchPlayers,
-  addPlayer,
   sortPlayers,
   formatMoney,
   type Player,
@@ -42,51 +41,35 @@ export default function Page() {
     void loadLeaderboard()
   }, [loadLeaderboard])
 
+  useEffect(() => {
+    if (!window.location.search.includes("checkout=")) return
+
+    window.history.replaceState({}, "", window.location.pathname)
+    void loadLeaderboard()
+  }, [loadLeaderboard])
+
   const sorted = useMemo(() => sortPlayers(players), [players])
   const champion = sorted[0]
   const contenders = sorted.slice(1)
 
-  async function handleSubmit(player: Player): Promise<Player> {
-    /*
-     * First save the bid.
-     *
-     * If this succeeds, the bid is considered successfully placed
-     * even if the following leaderboard refresh fails.
-     */
-    const savedPlayer = await addPlayer(player)
+  async function handleSubmit(player: Player): Promise<void> {
+    const response = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: player.username,
+        url: player.url,
+        bid: player.amount,
+      }),
+    })
+    const result = await response.json()
 
-    /*
-     * Immediately update the local leaderboard with the saved bid.
-     * This prevents the UI from depending entirely on a second
-     * network request after a successful insert.
-     */
-    setPlayers((currentPlayers) =>
-      sortPlayers([...currentPlayers, savedPlayer])
-    )
-
-    /*
-     * Try to get the authoritative leaderboard from Supabase.
-     *
-     * If this refresh fails, we keep the locally updated leaderboard.
-     * The bid itself has already been successfully saved.
-     */
-    try {
-      const rows = await fetchPlayers()
-      setPlayers(rows)
-    } catch (err) {
-      console.error("[v0] failed to refresh leaderboard after bid", err)
-
-      /*
-       * We deliberately do not throw here.
-       *
-       * Throwing would make BidDialog display an error even though
-       * the user's bid was already successfully saved.
-       */
+    if (!response.ok || !result.url) {
+      throw new Error(result.error || "Unable to open secure checkout. Please try again.")
     }
 
     setDialogOpen(false)
-
-    return savedPlayer
+    window.location.assign(result.url)
   }
 
   return (

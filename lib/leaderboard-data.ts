@@ -6,6 +6,12 @@ export type Player = {
   url?: string
 }
 
+type LeaderboardRow = {
+  username: string
+  website_url: string | null
+  bid: number
+}
+
 export function sortPlayers(players: Player[]): Player[] {
   return [...players].sort((a, b) => b.amount - a.amount)
 }
@@ -26,37 +32,11 @@ export async function fetchPlayers(): Promise<Player[]> {
     throw error
   }
 
-  return (data ?? []).map((row) => ({
+  return (data as LeaderboardRow[] | null ?? []).map((row) => ({
     username: String(row.username),
     amount: Number(row.bid),
     url: row.website_url
       ? String(row.website_url)
       : undefined,
   }))
-}
-
-export async function addPlayer(player: Player): Promise<Player> {
-  const supabase = createClient()
-
-  const { data, error } = await supabase
-    .from("entries")
-    .insert({
-      username: player.username,
-      website_url: player.url ?? null,
-      bid: player.amount,
-    })
-    .select("username, website_url, bid")
-    .single()
-
-  if (error) {
-    throw error
-  }
-
-  return {
-    username: String(data.username),
-    amount: Number(data.bid),
-    url: data.website_url
-      ? String(data.website_url)
-      : undefined,
-  }
 }
